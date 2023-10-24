@@ -10,7 +10,7 @@ void *Task(void *data)
 
     while (1)
     {
-        printf("Task: %d\n", tid);
+        printf("Task: %d, uptime: %ld\n", tid, osal_uptime());
         osal_task_delay_ms(1000);
 
         if (*(uint32_t *)data == 1)
