@@ -4,11 +4,11 @@
 
 #include "TaskPool.h"
 
-#include <pthread.h>
+#include "osal.h"
 
 void *Task(void *data)
 {
-    int tid = pthread_self();
+    int tid = osal_task_self();
 
     while (1)
     {

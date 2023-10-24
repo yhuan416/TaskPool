@@ -1,9 +1,6 @@
 #include "TaskPool.h"
 
-#include "pthread.h"
-
-// #include "task_adapter.h"
-#include "ual.h"
+#include "osal.h"
 
 typedef struct TaskPoolImpl {
     uint32_t stackSize; // 栈大小
@@ -13,7 +10,7 @@ typedef struct TaskPoolImpl {
     int8_t ref;         // 引用计数
     TaskPool_Notify notify; // 通知函数
     void *data;         // 私有数据
-    taskId tasks[0];    // 线程组
+    TaskId tasks[0];    // 线程组
 } TaskPoolImpl;
 
 TaskPool TaskPool_Create(const char *name, uint8_t size, TaskConfig *configs)
@@ -23,11 +20,11 @@ TaskPool TaskPool_Create(const char *name, uint8_t size, TaskConfig *configs)
     if (size == 0 || configs == NULL)
         return NULL;
     
-    new_pool = (TaskPoolImpl *)malloc(sizeof(struct TaskPoolImpl) + sizeof(taskId) * size);
+    new_pool = (TaskPoolImpl *)osal_malloc(sizeof(struct TaskPoolImpl) + sizeof(TaskId) * size);
     if (new_pool == NULL)
         return NULL;
 
-    memset(new_pool, 0, sizeof(struct TaskPoolImpl) + sizeof(taskId) * size);
+    memset(new_pool, 0, sizeof(struct TaskPoolImpl) + sizeof(TaskId) * size);
 
     new_pool->stackSize = configs->stackSize;
     new_pool->priority = configs->priority;
@@ -48,13 +45,13 @@ int32_t TaskPool_Start(TaskPool pool, TaskPool_Task task, TaskPool_Notify notify
         return -1;
 
     while (pool_impl->top < pool_impl->size)  {
-        taskAttr attr = {
+        TaskAttr attr = {
             .name = "TaskPool",
             .stackSize = pool_impl->stackSize,
             .priority = pool_impl->priority,
         };
 
-        taskId tid = ual_task_create(task, pool_impl->data, &attr);
+        TaskId tid = osal_task_create(task, pool_impl->data, &attr);
         if (tid == NULL)
             return -1;
 
@@ -93,11 +90,10 @@ int32_t TaskPool_Release(TaskPool pool)
         // 等待线程结束
         for (uint8_t i = 0; i < pool_impl->top; i++)
         {
-            // pthread_join(pool_impl->tasks[i], NULL);
-            ual_task_join(pool_impl->tasks[i]);
+            osal_task_join(pool_impl->tasks[i]);
         }
 
-        free(pool_impl);
+        osal_free(pool_impl);
         return 0;
     }
     return -1;
