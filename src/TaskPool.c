@@ -10,7 +10,7 @@ typedef struct TaskPoolImpl {
     int8_t ref;         // 引用计数
     TaskPool_Notify notify; // 通知函数
     void *data;         // 私有数据
-    TaskId tasks[0];    // 线程组
+    osal_task_t tasks[0];    // 线程组
 } TaskPoolImpl;
 
 TaskPool TaskPool_Create(const char *name, uint8_t size, TaskConfig *configs)
@@ -20,11 +20,11 @@ TaskPool TaskPool_Create(const char *name, uint8_t size, TaskConfig *configs)
     if (size == 0 || configs == NULL)
         return NULL;
     
-    new_pool = (TaskPoolImpl *)osal_malloc(sizeof(struct TaskPoolImpl) + sizeof(TaskId) * size);
+    new_pool = (TaskPoolImpl *)osal_malloc(sizeof(struct TaskPoolImpl) + sizeof(osal_task_t) * size);
     if (new_pool == NULL)
         return NULL;
 
-    memset(new_pool, 0, sizeof(struct TaskPoolImpl) + sizeof(TaskId) * size);
+    memset(new_pool, 0, sizeof(struct TaskPoolImpl) + sizeof(osal_task_t) * size);
 
     new_pool->stackSize = configs->stackSize;
     new_pool->priority = configs->priority;
@@ -45,13 +45,13 @@ int32_t TaskPool_Start(TaskPool pool, TaskPool_Task task, TaskPool_Notify notify
         return -1;
 
     while (pool_impl->top < pool_impl->size)  {
-        TaskAttr attr = {
+        osal_task_attr_t attr = {
             .name = "TaskPool",
             .stackSize = pool_impl->stackSize,
             .priority = pool_impl->priority,
         };
 
-        TaskId tid = osal_task_create(task, pool_impl->data, &attr);
+        osal_task_t tid = osal_task_create(task, pool_impl->data, &attr);
         if (tid == NULL)
             return -1;
 

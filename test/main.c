@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include <unistd.h>
-
 #include "TaskPool.h"
 
 #include "osal.h"
@@ -13,7 +11,7 @@ void *Task(void *data)
     while (1)
     {
         printf("Task: %d\n", tid);
-        sleep(1);
+        osal_task_delay_ms(1000);
 
         if (*(uint32_t *)data == 1)
             break;
@@ -49,7 +47,7 @@ int main(int argc, char const *argv[])
 
     TaskPool_Start(pool, Task, Notify);
 
-    sleep(5);
+    osal_task_delay(5);
 
     TaskPool_Release(pool);
 
